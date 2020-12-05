@@ -1,10 +1,7 @@
-#include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <fcntl.h>
 
@@ -25,7 +22,6 @@ void bip_32_seed_from_hsm_secret(const uint8_t *hsm_secret, const bool testnet, 
 			    &hsm_secret, sizeof(hsm_secret),
 			    "bip32 seed", strlen("bip32 seed"));
 		salt++;
-		/* ..Which is used to derive m/ */
 	} while (bip32_key_from_seed(bip32_seed, sizeof(bip32_seed),
 				     version, 0, master_extkey) != WALLY_OK);
 }
@@ -37,11 +33,7 @@ int main (int argc, char **argv)
     char *encoded_xpriv;
     uint8_t hsm_secret[32];
     bool testnet = false;
-    bool help = false;
     struct ext_key master_extkey;
-
-    int ret;
-    int count = 0;
 
     while ((opt = getopt(argc, argv, "s:th")) != -1) {
     switch (opt) {
