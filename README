@@ -1,0 +1,9 @@
+Script to derive master xpriv from unencrypted lightning hsm secret.
+
+Build ccan and libwally first. Than:
+
+`./build.sh`
+
+Usage:
+
+`lightning-priv -s /path/to/hsmsecret/`
