@@ -1,3 +1,6 @@
 [submodule "libwally-core"]
 	path = libwally-core
 	url = https://github.com/ElementsProject/libwally-core.git
+[submodule "ccan"]
+	path = ccan
+	url = https://github.com/rustyrussell/ccan.git
