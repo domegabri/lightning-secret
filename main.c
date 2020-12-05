@@ -3,10 +3,11 @@
 #include <string.h>
 #include <getopt.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <fcntl.h>
 
+#include <wally_core.h>
 #include <wally_bip32.h>
-#include <ccan/ccan/read_write_all/read_write_all.h>
 #include <ccan/ccan/crypto/hkdf_sha256/hkdf_sha256.h>
 
 /* snippets inspired from:
@@ -15,7 +16,7 @@
  * Use with extreme caution
  */
 
-void bip_32_seed_from_hsm_secret(const uint8_t* hsm_secret, const bool mainnet, struct ext_key* master_extkey)
+void bip_32_seed_from_hsm_secret(const unsigned char** hsm_buffer, size_t hsm_buffer_len, const bool mainnet, struct ext_key* master_extkey)
 {
     uint32_t salt = 0;
     uint32_t version = mainnet ? BIP32_VER_MAIN_PRIVATE : BIP32_VER_TEST_PRIVATE;
@@ -24,7 +25,7 @@ void bip_32_seed_from_hsm_secret(const uint8_t* hsm_secret, const bool mainnet, 
     do {
         hkdf_sha256(bip32_seed, sizeof(bip32_seed),
             &salt, sizeof(salt),
-            &hsm_secret, sizeof(hsm_secret),
+            *hsm_buffer, hsm_buffer_len,
             "bip32 seed", strlen("bip32 seed"));
         salt++;
     } while (bip32_key_from_seed(bip32_seed, sizeof(bip32_seed),
@@ -34,12 +35,14 @@ void bip_32_seed_from_hsm_secret(const uint8_t* hsm_secret, const bool mainnet, 
 
 int main(int argc, char** argv)
 {
-    int opt, fd;
-    char* hsm_secret_path;
-    char* encoded_xpriv;
-    uint8_t hsm_secret[32];
+    int opt;
     bool mainnet = false;
+    char* hsm_secret_path;
+    FILE* f;
+    unsigned char* hsm_buffer;
+    size_t len;
     struct ext_key master_extkey;
+    char* encoded_xpriv;
 
     while ((opt = getopt(argc, argv, "s:m")) != -1) {
         switch (opt) {
@@ -56,23 +59,21 @@ int main(int argc, char** argv)
         }
     }
 
-    // get the hsm secret
-    fd = open(hsm_secret_path, O_RDONLY);
-    if (fd < 0) {
-        printf("Could not open hsm_secret\n");
+    f = fopen(hsm_secret_path, "rb");
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    rewind(f);
+    hsm_buffer = (char*)malloc(len * sizeof(char));
+    fread(hsm_buffer, len, 1, f);
+    fclose(f);
+
+    // derive seed and master key
+    bip_32_seed_from_hsm_secret(&hsm_buffer, len, mainnet, &master_extkey);
+    if (bip32_key_to_base58(&master_extkey, BIP32_FLAG_KEY_PRIVATE, &encoded_xpriv) != WALLY_OK) {
+        printf("Failed to encode xpriv");
         return 1;
     }
-
-    if (read_all(fd, hsm_secret, sizeof(*hsm_secret))) {
-        // derive seed and master key
-        bip_32_seed_from_hsm_secret(hsm_secret, mainnet, &master_extkey);
-        if (bip32_key_to_base58(&master_extkey, BIP32_FLAG_KEY_PRIVATE, &encoded_xpriv) != WALLY_OK) {
-            printf("Failed to encode xpriv");
-            return 1;
-        }
-        else {
-            printf("%s\n", encoded_xpriv);
-        }
+    else {
+        printf("%s\n", encoded_xpriv);
     }
 }
-
