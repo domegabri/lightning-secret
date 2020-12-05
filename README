@@ -6,4 +6,6 @@ Build ccan and libwally first. Than:
 
 Usage:
 
-`lightning-priv -s /path/to/hsmsecret/`
+`lightning-priv -s /path/to/hsmsecret/ [-m]`
+
+-m      enable mainnet (optional, testnet by  default)

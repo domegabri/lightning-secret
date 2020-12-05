@@ -50,7 +50,7 @@ int main(int argc, char** argv)
             mainnet = !mainnet;
             break;
         default: /* '?' */
-            fprintf(stderr, "Usage: %s -s /path/to/hsmssecret\n",
+            fprintf(stderr, "Usage: %s -s /path/to/hsmssecret [-m]\n-m\t enable mainnet",
                 argv[0]);
             exit(EXIT_FAILURE);
         }
