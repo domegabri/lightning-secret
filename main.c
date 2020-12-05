@@ -10,10 +10,10 @@
 #include<ccan/ccan/read_write_all/read_write_all.h>
 #include<ccan/ccan/crypto/hkdf_sha256/hkdf_sha256.h>
 
-void bip_32_seed_from_hsm_secret(const uint8_t *hsm_secret, const bool testnet, struct ext_key *master_extkey)
+void bip_32_seed_from_hsm_secret(const uint8_t *hsm_secret, const bool mainnet, struct ext_key *master_extkey)
 {
     uint32_t salt = 0;
-    uint32_t version = testnet ? BIP32_VER_TEST_PRIVATE : BIP32_VER_MAIN_PRIVATE;
+    uint32_t version = mainnet ? BIP32_VER_MAIN_PRIVATE : BIP32_VER_TEST_PRIVATE;
     uint8_t bip32_seed[BIP32_ENTROPY_LEN_256];
 
     do {
@@ -32,16 +32,16 @@ int main (int argc, char **argv)
     char *hsm_secret_path;
     char *encoded_xpriv;
     uint8_t hsm_secret[32];
-    bool testnet = false;
+    bool mainnet = false;
     struct ext_key master_extkey;
 
-    while ((opt = getopt(argc, argv, "s:th")) != -1) {
+    while ((opt = getopt(argc, argv, "s:m")) != -1) {
     switch (opt) {
         case 's':
             hsm_secret_path = optarg;
             break;
-        case 't':
-            testnet = !testnet;
+        case 'm':
+            mainnet = !mainnet;
             break;
         default: /* '?' */
             fprintf(stderr, "Usage: %s -s /path/to/hsmssecret\n",
@@ -59,7 +59,7 @@ int main (int argc, char **argv)
 
     if (read_all(fd, hsm_secret, sizeof(*hsm_secret))) {
         // derive seed and master key
-        bip_32_seed_from_hsm_secret(hsm_secret, testnet, &master_extkey);
+        bip_32_seed_from_hsm_secret(hsm_secret, mainnet, &master_extkey);
         if (bip32_key_to_base58(&master_extkey, BIP32_FLAG_KEY_PRIVATE, &encoded_xpriv) != WALLY_OK) {
             printf("Failed to encode xpriv");
             return 1;
