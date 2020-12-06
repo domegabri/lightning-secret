@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <fcntl.h>
 
-#include <wally_core.h>
 #include <wally_bip32.h>
 #include <ccan/ccan/crypto/hkdf_sha256/hkdf_sha256.h>
 
@@ -75,5 +74,6 @@ int main(int argc, char** argv)
     }
     else {
         printf("%s\n", encoded_xpriv);
+        return 0;
     }
 }
